@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wertogo · Live Beach Crowds</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    padding: 0 16px 32px;
+  }
+
+  header {
+    padding: 28px 0 20px;
+    text-align: center;
+  }
+
+  .logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #1a1a2e;
+  }
+
+  .logo span {
+    color: #0891b2;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .subtitle .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #22c55e;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    margin-bottom: 12px;
+  }
+
+  .updated {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .beach-count {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    position: relative;
+    transition: transform 0.15s ease;
+  }
+
+  .card:active {
+    transform: scale(0.985);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .beach-name {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    flex: 1;
+    padding-right: 8px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+
+  .badge-quiet { background: #dcfce7; color: #15803d; }
+  .badge-moderate { background: #fef3c7; color: #b45309; }
+  .badge-busy { background: #ffedd5; color: #c2410c; }
+  .badge-packed { background: #fee2e2; color: #dc2626; }
+
+  .card-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .people-count {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .people-count strong {
+    color: #1a1a2e;
+    font-weight: 700;
+  }
+
+  .pct {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .pct-quiet { color: #16a34a; }
+  .pct-moderate { color: #d97706; }
+  .pct-busy { color: #ea580c; }
+  .pct-packed { color: #dc2626; }
+
+  .bar-track {
+    width: 100%;
+    height: 10px;
+    background: #f3f4f6;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+  }
+
+  .bar-quiet { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .bar-moderate { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .bar-busy { background: linear-gradient(90deg, #f97316, #fb923c); }
+  .bar-packed { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  .best-badge {
+    position: absolute;
+    top: -8px;
+    right: 16px;
+    background: #0891b2;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #0891b2;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 14px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 16px 0 8px;
+    font-size: 11px;
+    color: #d1d5db;
+  }
+
+  .best-time {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f3f4f6;
+    font-size: 12px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .best-time strong {
+    color: #0891b2;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Werto<span>go</span></div>
+    <div class="subtitle"><span class="dot"></span>Live beach crowds · Calvià</div>
+  </header>
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Checking the beaches…</div>
+    </div>
+  </div>
+  <div class="footer">Data: Ajuntament de Calvià · Auto-refreshes every 10 min</div>
+</div>
+
+<script>
+const CAPACITY = {
+  "Playa de Santa Ponça": 2318,
+  "Playa de Magaluf": 2200,
+  "Playa de Son Maties": 1520,
+  "Playa des Carregador": 1163,
+  "Playa de na Nadala": 1969,
+  "Playa de Gran de Torà": 1800
+};
+
+const BEACH_NAMES = {
+  "Playa de Santa Ponça": "Santa Ponça Beach",
+  "Playa de Magaluf": "Magaluf Beach",
+  "Playa de Son Maties": "Son Maties Beach",
+  "Playa des Carregador": "Carregador Beach",
+  "Playa de na Nadala": "Na Nadala Beach",
+  "Playa de Gran de Torà": "Gran de Torà Beach"
+};
+
+const MOCK = [
+  { variable: "Playa de Santa Ponça", value: 420 },
+  { variable: "Playa de Magaluf", value: 1540 },
+  { variable: "Playa de Son Maties", value: 95 },
+  { variable: "Playa des Carregador", value: 280 },
+  { variable: "Playa de na Nadala", value: 1180 },
+  { variable: "Playa de Gran de Torà", value: 610 }
+];
+
+// Week raw data from BestTime (Palmanova Beach) — 0=Mon, hours 0–23
+const WEEK_RAW = [
+  [0,5,5,10,15,20,20,20,15,20,25,30,35,35,25,20,10,5,5,0,0,5,5,5],   // Mon
+  [5,5,5,10,15,25,25,25,15,15,25,30,40,40,30,20,10,5,0,5,5,5,5,5],   // Tue
+  [5,5,5,10,15,20,25,25,20,20,30,40,50,50,35,20,10,5,5,5,0,5,5,5],   // Wed
+  [5,0,5,10,15,25,30,30,25,25,30,35,45,45,40,25,15,10,5,5,5,5,5,5],  // Thu
+  [5,5,5,5,10,15,20,25,30,25,30,35,45,45,40,25,15,10,5,5,0,0,5,5],   // Fri
+  [5,5,5,10,25,35,45,45,45,45,50,60,65,60,50,35,20,10,5,5,5,5,0,0],  // Sat
+  [0,5,5,15,30,50,70,80,80,80,85,95,100,85,55,30,15,5,5,5,5,5,5,0]   // Sun
+];
+
+function getBestTime() {
+  const now = new Date();
+  const jsDay = now.getDay(); // 0=Sun
+  const weekRawDay = (jsDay + 6) % 7; // convert to 0=Mon
+  const currentHour = now.getHours();
+  const dayData = WEEK_RAW[weekRawDay];
+
+  // Find quietest remaining beach hour (sensible window: now until 5pm)
+  let best = null;
+  for (let h = Math.max(currentHour + 1, 9); h <= 17; h++) {
+    if (best === null || dayData[h] < dayData[best]) best = h;
+  }
+  if (best === null) return null;
+
+  const h = best;
+  return h === 12 ? '12pm' : h > 12 ? `${h - 12}pm` : `${h}am`;
+}
+
+function tier(pct) {
+  if (pct <= 30) return { label: "Quiet", key: "quiet" };
+  if (pct <= 60) return { label: "Getting busy", key: "moderate" };
+  if (pct <= 85) return { label: "Busy", key: "busy" };
+  return { label: "Packed", key: "packed" };
+}
+
+const PROXY = "https://calvia-proxy.mwood-430.workers.dev";
+
+async function getToken() {
+  const res = await fetch(`${PROXY}/auth/sso/public`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "user_public", service: "dti_calvia" })
+  });
+  if (!res.ok) throw new Error("auth failed");
+  const data = await res.json();
+  return data.token || data.authorization || data.access_token || data.jwt;
+}
+
+async function fetchData() {
+  try {
+    const token = await getToken();
+    const res = await fetch(
+      `${PROXY}/api/widgets/category?service=dti_calvia&scope=Playa%20de%20na%20Nadala`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          widgetId: "6a0cb78c171db775cf1e5d85",
+          datasourceParameters: { start: "", finish: "", name: "", municipality: "" },
+          timeVar: "timeinstant",
+          filters: [],
+          groupVar: "name",
+          distinct: false,
+          countVar: "peoplecount",
+          countVarAgg: "sum"
+        })
+      }
+    );
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) throw new Error("empty");
+    return data;
+  } catch {
+    return MOCK;
+  }
+}
+
+function render(raw) {
+  // Deduplicate by name, keeping highest count
+  const deduped = Object.values(
+    raw.reduce((acc, d) => {
+      if (!acc[d.variable] || d.value > acc[d.variable].value) acc[d.variable] = d;
+      return acc;
+    }, {})
+  );
+
+  const beaches = deduped
+    .filter(d => CAPACITY[d.variable])
+    .map(d => {
+      const cap = CAPACITY[d.variable];
+      const count = Math.max(0, d.value);
+      const pct = Math.min(100, Math.round((count / cap) * 100));
+      const displayName = BEACH_NAMES[d.variable] || d.variable;
+      return { name: displayName, count, capacity: cap, pct, ...tier(pct) };
+    })
+    .sort((a, b) => a.pct - b.pct);
+
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const bestTime = getBestTime();
+  const dayName = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][now.getDay()];
+
+  let html = `
+    <div class="meta">
+      <span class="updated">Updated ${time}</span>
+      <span class="beach-count">${beaches.length} beaches</span>
+    </div>`;
+
+  const firstWithPeople = beaches.findIndex(b => b.count > 0);
+
+  beaches.forEach((b, i) => {
+    html += `
+    <div class="card">
+      ${i === firstWithPeople ? '<div class="best-badge">Best right now</div>' : ''}
+      <div class="card-top">
+        <div class="beach-name">${b.name}</div>
+        <span class="badge badge-${b.key}">${b.label}</span>
+      </div>
+      <div class="card-stats">
+        <span class="people-count"><strong>${b.count.toLocaleString()}</strong> / ${b.capacity.toLocaleString()} people</span>
+        <span class="pct pct-${b.key}">${b.pct}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-${b.key}" style="width:${b.pct}%"></div>
+      </div>
+      ${bestTime ? `<div class="best-time">🕐 Typically quietest this ${dayName} around <strong>${bestTime}</strong></div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById("content").innerHTML = html;
+}
+
+async function refresh() {
+  const data = await fetchData();
+  render(data);
+}
+
+refresh();
+setInterval(refresh, 10 * 60 * 1000);
+</script>
+</body>
+</html>
